@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+
+    environment {
+        ACR_NAME = 'testingcr'
+        ACR_LOGIN_SERVER = "${ACR_NAME}.azurecr.io"
+        IMAGE_NAME = 'apache-app'
+        IMAGE_TAG = "${env.BUILD_ID}"
+        FULL_IMAGE = "${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/K1ruba/jenkins.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t ${FULL_IMAGE} ."
+            }
+        }
+
+        stage('Push to ACR') {
+            steps {
+                script {
+                    withDockerRegistry(
+                        credentialsId: 'e18bbaba-6339-4017-876d-8589b8e75d18',
+                        url: "https://${env.ACR_LOGIN_SERVER}"
+                    ) {
+                        sh "docker push ${FULL_IMAGE}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to AKS') {
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh '''
+                    echo "Using kubeconfig to deploy to AKS..."
+
+                    # Replace image name in deployment.yaml with latest build tag
+                    sed -i "s|image: .*|image: ${FULL_IMAGE}|g" deployment.yaml
+
+                    # Deploy updated configs
+                    kubectl apply -f deployment.yaml
+                    kubectl apply -f service.yaml
+                    '''
+                }
+            }
+        }
+    }
+}
