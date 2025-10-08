@@ -25,5 +25,6 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/jenkins_pipeline:lates
-                ${{ secrets.DOCKER_USERNAME }}/jenkins_pipeline:${{ github.sha }}
+          tags: |
+            your-dockerhub-username/jenkins_pipeline:latest
+            your-dockerhub-username/jenkins_pipeline:${{ github.sha }}
