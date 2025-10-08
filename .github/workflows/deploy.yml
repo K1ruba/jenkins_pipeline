@@ -29,8 +29,8 @@ jobs:
           sed -i "s|image: .*|image: $IMAGE_NAME|" jenkins_pipeline/deployment.yaml
 
           # Apply deployment and service
-          kubectl apply -f jenkins_pipeline/deployment.yaml
-          kubectl apply -f jenkins_pipeline/service.yaml
+          kubectl apply -f deployment.yaml
+          kubectl apply -f service.yaml
 
           # Show pods and services for verification
           kubectl get pods -A
