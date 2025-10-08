@@ -8,18 +8,32 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
+
     steps:
+      # Step 1: Checkout repo
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Step 2: Set up kubectl
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
         with:
           version: v1.33.1
 
+      # Step 3: Deploy to Minikube with dynamic image
       - name: Deploy to Minikube
+        env:
+          IMAGE_TAG: ${{ github.sha }}   # Use commit SHA as image tag
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         run: |
-          kubectl apply -f jenkins_pipeline/deployment.yaml
+          # Build the full image name
+          IMAGE_NAME=${DOCKER_USERNAME}/jenkins_pipeline:${IMAGE_TAG}
+
+          # Update the deployment image dynamically
+          kubectl set image deployment/jenkins-pipeline-app \
+            jenkins-pipeline=$IMAGE_NAME
+
+          # Apply any other resources (services, configmaps, etc.)
           kubectl apply -f jenkins_pipeline/service.yaml
-          kubectl get pods -A
-          kubectl get svc -A
+          kubectl apply -f jenkins_pipeline/deployment.yaml
+
