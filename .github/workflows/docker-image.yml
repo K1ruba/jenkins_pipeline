@@ -7,8 +7,7 @@ on:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
-
+    runs-on: self-hosted   # Use your self-hosted runner if you want to deploy to Minikube
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,5 +25,6 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            your-dockerhub-username/jenkins_pipeline:latest
-            your-dockerhub-username/jenkins_pipeline:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/jenkins_pipeline:latest
+            ${{ secrets.DOCKER_USERNAME }}/jenkins_pipeline:${{ github.sha }}
+
